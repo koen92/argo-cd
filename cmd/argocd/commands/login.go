@@ -33,11 +33,12 @@ import (
 // NewLoginCommand returns a new instance of `argocd login` command
 func NewLoginCommand(globalClientOpts *argocdclient.ClientOptions) *cobra.Command {
 	var (
-		ctxName  string
-		username string
-		password string
-		sso      bool
-		ssoPort  int
+		ctxName         string
+		username        string
+		password        string
+		sso             bool
+		ssoPort         int
+		ssoClientSecret string
 	)
 	var command = &cobra.Command{
 		Use:   "login SERVER",
@@ -108,6 +109,7 @@ func NewLoginCommand(globalClientOpts *argocdclient.ClientOptions) *cobra.Comman
 				acdSet, err := setIf.Get(ctx, &settingspkg.SettingsQuery{})
 				errors.CheckError(err)
 				oauth2conf, provider, err := acdClient.OIDCConfig(ctx, acdSet)
+				oauth2conf.ClientSecret = ssoClientSecret
 				errors.CheckError(err)
 				tokenString, refreshToken = oauth2Login(ctx, ssoPort, acdSet.GetOIDCConfig(), oauth2conf, provider)
 			}
@@ -157,6 +159,7 @@ func NewLoginCommand(globalClientOpts *argocdclient.ClientOptions) *cobra.Comman
 	command.Flags().StringVar(&password, "password", "", "the password of an account to authenticate")
 	command.Flags().BoolVar(&sso, "sso", false, "perform SSO login")
 	command.Flags().IntVar(&ssoPort, "sso-port", DefaultSSOLocalPort, "port to run local OAuth2 login application")
+	command.Flags().StringVar(&ssoClientSecret, "sso-client-secret", "", "client secret to pass to idp for confidential oauth flow")
 	return command
 }
 
